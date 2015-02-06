@@ -36,6 +36,8 @@ Doxyfile-tmp
 log-doxygen.txt
 temp
 
+/src/third_party/libuv/src/unix/uv-dtrace.h
+
 qm.conf
 db
 *.dat

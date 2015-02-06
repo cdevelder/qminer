@@ -23,7 +23,7 @@ exports = module.exports; // re-establish link
 function createBatchModel(featureSpace, models) {
     this.featureSpace = featureSpace;
     this.models = models;
-    // get targets
+    // get targets, i.e., labels for which we have models
     this.target = [];
     for (var cat in this.models) { this.target.push(cat); }
     // serialize to stream
@@ -105,14 +105,12 @@ exports.newBatchModel = function (records, features, target, limitCategories) {
     // prepare target vectors
     var targets = { };
     // figure out if new category name, or update count
-    function initCats(categories, catName) {
-        if (categories[catName]) {
-            categories[catName].count++; 
-        } else {
-            // check if we should ignore this category
-            if (limitCategories && !util.isInArray(limitCategories, catName)) { return; }
-            // check if we should ignore this category
-            categories[catName] = { 
+    function initCats(targets, catName) {
+        if (targets[catName]) {
+            targets[catName].count++; 
+        } else if (!limitCategories || util.isInArray(limitCategories, catName)) {
+            // only initialize if we don't limit cats, or it's to be included
+            targets[catName] = { 
                 name: catName, 
                 type: "classification",
                 count: 1, 
@@ -204,30 +202,53 @@ exports.loadBatchModel = function (sin) {
 //#     provided categories. Returns an object, which can track classification
 //#     statistics (precision, recall, F1).
 exports.classificationScore = function (cats) {
-	this.target = { };
+	// Preliminaries: auxiliary functions
+    function initClassificationResult(i) {
+        return { 
+            id: i, count: 0, predictionCount: 0,
+            TP: 0, TN: 0, FP: 0, FN: 0,
+            all : function () { return this.TP + this.FP + this.TN + this.FN; },
+            precision : function () { return (this.FP == 0) ? 1 : this.TP / (this.TP + this.FP); },
+            recall : function () { return this.TP / (this.TP + this.FN); },
+            f1: function () { return 2 * this.precision() * this.recall() / (this.precision() + this.recall()); },
+            accuracy : function () { return (this.TP + this.TN) / this.all(); }
+        };
+    };
+
+    function addCategory(cfscore, cat) {
+        cfscore.target[cat] = initClassificationResult(cfscore.targetList.length);
+        cfscore.targetList.push(cat);
+    }
+
+    // Function body for classificationScore
+    this.target = { };
     
 	this.targetList = [ ];
 	for (var i = 0; i < cats.length; i++) {
-		this.target[cats[i]] = { 
-			id: i, count: 0, predictionCount: 0,
-			TP: 0, TN: 0, FP: 0, FN: 0,
-			all : function () { return this.TP + this.FP + this.TN + this.FN; },
-			precision : function () { return (this.FP == 0) ? 1 : this.TP / (this.TP + this.FP); },
-			recall : function () { return this.TP / (this.TP + this.FN); },
-            f1: function () { return 2 * this.precision() * this.recall() / (this.precision() + this.recall()); },
-			accuracy : function () { return (this.TP + this.TN) / this.all(); }
-		};
-		this.targetList.push(cats[i]);		
-	}
+		addCategory(this, cats[i]);
+    }
 	
     //#    - `cs.count(correct, predicted)` -- adds prediction to the current
     //#         statistics. `correct` corresponds to the correct label(s), `predicted`
-    //#         correspond to predicted lable(s). Labels can be either string
+    //#         corresponds to predicted lable(s). Labels can be either string
     //#         or string array (when there are zero or more then one lables).
 	this.count = function (correct, predicted) {
-        // wrapt classes in arrays if not already
+        // wrap classes in arrays if not already
         if (util.isString(correct)) { this.count([correct], predicted); return; }
         if (util.isString(predicted)) { this.count(correct, [predicted]); return; }
+        // first check that all labels (correct or predicted) are already in targets
+        for (var i = 0; i < correct.length; ++i) {
+            var cat = correct[i];
+            if (!(cat in this.target)) {
+                addCategory(this, cat);
+            }
+        }
+        for (var i = 0; i < predicted.length; ++i) {
+            var cat = predicted[i];
+            if (!(cat in this.target)) {
+                addCategory(this, cat);
+            }
+        }
         // go over all possible categories and counts
         for (var cat in this.target) {
             var catCorrect = util.isInArray(correct, cat);
@@ -464,6 +485,7 @@ exports.rocScore = function () {
 		fs.writeCsv(fs.openWrite(fnm), curve).close();
 	}
 }
+
 //#- `cf = new analytics.confusionMatrix(cats)` -- for tracking confusion between label classification
 exports.confusionMatrix = function (cats) {
     //#     - `cf.cats` -- categories we are tracking
@@ -567,17 +589,10 @@ exports.crossValidation = function (records, features, target, folds, limitCateg
 		}
 		var trainRecs = records.store.newRecSet(train);
 		var testRecs = records.store.newRecSet(test);
-		console.log("Fold " + fold_i + ": " + trainRecs.length + " training and " + testRecs.length + " testing");
+		console.log("crossValidation", "Fold " + fold_i + ": " + trainRecs.length + " training and " + testRecs.length + " testing");
 		// create model for the fold
 		var model = exports.newBatchModel(trainRecs, features, target, limitCategories);
 		// prepare test counts for each target
-        // TODO: Not all the folds will necessarily have the same categories,
-        // e.g., if the first fold has <50 occurrences for category X, then 
-        // newBatchModel(...) will not build a classifier for X; if the next
-        // fold(s) do contain > 50 occurrences, they will.
-        // --> results for X will *NOT* be included
-        // Vice versa, if Y has >50 occurencies in 1st fold, but not in (some)
-        // of the other folds, scores will not be calculated over all folds.
 		if (!cfyRes) { cfyRes = new exports.classificationScore(model.target); }
 		// evaluate predictions
 		for (var i = 0; i < testRecs.length; i++) {
@@ -1168,7 +1183,7 @@ exports.kNearestNeighbors = function (k, buffer, power) {
         return numerator / denumerator;
     }
 
-    // Used for updatig
+    // Used for updating
     var add = function (x, target) {
         matrixVec.push(x);
         targetVec.push(target);
