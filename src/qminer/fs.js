@@ -116,7 +116,7 @@ fs.writeJson = function(fileName, json) {
     fs.openWrite(fileName).writeLine(JSON.stringify(json)).close();
 }
 
-//#- `fs.readJsonLines(fileName, callback)` - raed file line by line as string,
+//#- `fs.readJsonLines(fileName, callback)` - read file line by line as string,
 //#     parse each line to JSON and callback with JSON as the only parameter
 fs.readJsonLines = function(fileName, callback) {
     var fin = fs.openRead(fileName);

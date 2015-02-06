@@ -200,10 +200,10 @@ exports.loadBatchModel = function (sin) {
     return new createBatchModel(featureSpace, models);    
 };
 
-//#- `cs = new analytics.classificaitonScore(cats)` -- for evaluating 
+//#- `cs = new analytics.classificationScore(cats)` -- for evaluating 
 //#     provided categories. Returns an object, which can track classification
 //#     statistics (precision, recall, F1).
-exports.classifcationScore = function (cats) {
+exports.classificationScore = function (cats) {
 	this.target = { };
     
 	this.targetList = [ ];
@@ -260,7 +260,7 @@ exports.classifcationScore = function (cats) {
 			console.log(cat + 
 				": Count " + this.target[cat].count + 
 				", All " + this.target[cat].all() + 
-				", Precission " + this.target[cat].precision().toFixed(2) + 
+				", Precision " + this.target[cat].precision().toFixed(2) + 
 				", Recall " +  this.target[cat].recall().toFixed(2) +
 				", F1 " + this.target[cat].f1().toFixed(2) +
 				", Accuracy " + this.target[cat].accuracy().toFixed(2));
@@ -278,7 +278,7 @@ exports.classifcationScore = function (cats) {
             accuracy = accuracy + this.target[cat].accuracy();
         }
         console.log("Categories " + count + 
-            ", Precission " + (precision / count).toFixed(2) + 
+            ", Precision " + (precision / count).toFixed(2) + 
             ", Recall " +  (recall / count).toFixed(2) +
             ", F1 " + (f1 / count).toFixed(2) +
             ", Accuracy " + (accuracy / count).toFixed(2));        
@@ -571,7 +571,14 @@ exports.crossValidation = function (records, features, target, folds, limitCateg
 		// create model for the fold
 		var model = exports.newBatchModel(trainRecs, features, target, limitCategories);
 		// prepare test counts for each target
-		if (!cfyRes) { cfyRes = new exports.classifcationScore(model.target); }
+        // TODO: Not all the folds will necessarily have the same categories,
+        // e.g., if the first fold has <50 occurrences for category X, then 
+        // newBatchModel(...) will not build a classifier for X; if the next
+        // fold(s) do contain > 50 occurrences, they will.
+        // --> results for X will *NOT* be included
+        // Vice versa, if Y has >50 occurencies in 1st fold, but not in (some)
+        // of the other folds, scores will not be calculated over all folds.
+		if (!cfyRes) { cfyRes = new exports.classificationScore(model.target); }
 		// evaluate predictions
 		for (var i = 0; i < testRecs.length; i++) {
 			var correct = testRecs[i][target.name];
