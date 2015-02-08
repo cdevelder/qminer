@@ -22,7 +22,7 @@ fs.readFile = function (fileName) {
     return fs.openRead(fileName).readAll();
 };
 
-//#- `fs.readLines(fileName, callback)` - raed file line by line as string and 
+//#- `fs.readLines(fileName, callback)` - read file line by line as string and 
 //#      calls the given callback with line as the only parameter
 fs.readLines = function(fileName, callback) {
     var fin = fs.openRead(fileName);
@@ -36,7 +36,7 @@ fs.readLines = function(fileName, callback) {
     }
 }
 
-//#- `fs.readLines(fileName, callback)` - raed file line by line as string, parses
+//#- `fs.readLines(fileName, callback)` - read file line by line as string, parses
 //#     it into array and calls the given callback with array as the only parameter.
 //#     Code is taken from http://stackoverflow.com/a/1293163
 fs.readCsvLines = function(fileName, callback, strDelimiter) {
