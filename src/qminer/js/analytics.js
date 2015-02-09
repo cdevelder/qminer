@@ -203,30 +203,23 @@ exports.loadBatchModel = function (sin) {
 //#     provided categories. Returns an object, which can track classification
 //#     statistics (precision, recall, F1).
 exports.classificationScore = function (cats) {
-	// Preliminaries: auxiliary functions
-    function initClassificationResult(i) {
-        return { 
-            id: i, count: 0, predictionCount: 0,
-            TP: 0, TN: 0, FP: 0, FN: 0,
-            all : function () { return this.TP + this.FP + this.TN + this.FN; },
-            precision : function () { return (this.FP == 0) ? 1 : this.TP / (this.TP + this.FP); },
-            recall : function () { return this.TP / (this.TP + this.FN); },
-            f1: function () { return 2 * this.precision() * this.recall() / (this.precision() + this.recall()); },
-            accuracy : function () { return (this.TP + this.TN) / this.all(); }
-        };
-    }
-
     // Function body for classificationScore
-    this.target = { };
-    this.targetList = [ ];
+    this.target = { }; // results for each category
 	
     //#    - `cs.addCategory(cat)` -- adds category `cat` to the targets
     //#         to track performance for. *Note:* `cat` only gets added if
     //#         it was not there before
     this.addCategory = function (cat) {
         if (!(cat in this.target)) {
-            this.target[cat] = initClassificationResult(this.targetList.length);
-            this.targetList.push(cat);
+            this.target[cat] = {
+                count: 0, predictionCount: 0,
+                TP: 0, TN: 0, FP: 0, FN: 0,
+                all : function () { return this.TP + this.FP + this.TN + this.FN; },
+                precision : function () { return (this.FP == 0) ? 1 : this.TP / (this.TP + this.FP); },
+                recall : function () { return this.TP / (this.TP + this.FN); },
+                f1: function () { return 2 * this.precision() * this.recall() / (this.precision() + this.recall()); },
+                accuracy : function () { return (this.TP + this.TN) / this.all(); }
+            };
         }
     };
 
@@ -565,10 +558,11 @@ exports.crossValidation = function (records, features, target, folds, limitCateg
 	var fold_i = 0;
 	for (var i = 0; i < records.length; i++) {
 		fold[fold_i].push(records[i].$id);
-		fold_i++; if (fold_i >= folds) { fold_i = 0; }
+		if (++fold_i == folds) { fold_i = 0; }
 	} 
 	// do cross validation
-	var cfyRes = null;
+	var cfyRes = [];
+    var globalTargetList = [];
 	for (var fold_i = 0; fold_i < folds; fold_i++) {		
 		// prepare train and test record sets
 		var train = la.newIntVec();
@@ -586,24 +580,40 @@ exports.crossValidation = function (records, features, target, folds, limitCateg
 		// create model for the fold
 		var model = exports.newBatchModel(trainRecs, features, target, limitCategories);
 		// prepare test counts for each target
-		if (!cfyRes) {
-            cfyRes = new exports.classificationScore(model.target);
-        } else {
-            // assure that cfyRes knows about all (new!) model.target labels
-            for (var i = 0; i < model.target.length; i++) {
-                cfyRes.addCategory(model.target[i]);
+        // we create a new classificationScore for each fold, since else
+        // we will be also counting results for a target that the current fold
+        // may not have created a model for -- which doesn't seem very fair
+        cfyRes[fold_i] = new exports.classificationScore(model.target);
+        for (var i = 0; i < model.target.length; i++) {
+            var cat = model.target[i];
+            if (!util.isInArray(globalTargetList, cat)) {
+                globalTargetList.push(cat);
             }
         }
 		// evaluate predictions
 		for (var i = 0; i < testRecs.length; i++) {
 			var correct = testRecs[i][target.name];
 			var predicted = model.predictLabels(testRecs[i]);
-			cfyRes.count(correct, predicted);
+			cfyRes[fold_i].count(correct, predicted);
 		}
 		// report
-		cfyRes.report();
+		cfyRes[fold_i].report();
 	}
-	return cfyRes;
+    // merge all classification results
+    var cfyResTotal = new exports.classificationScore(globalTargetList);
+    var globaltarget = cfyResTotal.target;
+    for (var fold_i = 0; fold_i < folds; fold_i++) {
+        var foldtarget = cfyRes[fold_i].target;
+        for (var cat in foldtarget) {
+            globaltarget[cat].TP += foldtarget[cat].TP;
+            globaltarget[cat].FP += foldtarget[cat].FP;
+            globaltarget[cat].TN += foldtarget[cat].TN;
+            globaltarget[cat].FN += foldtarget[cat].FN;
+            globaltarget[cat].count += foldtarget[cat].count;
+            globaltarget[cat].predictionCount += foldtarget[cat].predictionCount;
+        } 
+    }
+	return cfyResTotal;
 };
 
 
