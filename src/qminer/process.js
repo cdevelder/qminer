@@ -42,14 +42,14 @@ process.getArg = function(arg, defValue) {
 }
 
 //#- `num = process.getArgFloat(argStr)` -- returns the value of command-line 
-//      argument with prefix `argStr`, and transform it to float before return
+//      argument with prefix `argStr`, and transforms it to float before return
 process.getArgFloat = function(arg, defValue) {
     var val = process.getArg(arg);
 	return val ? parseFloat(val) : defValue; 
 }
 
 //#- `num = process.getArgInt(argStr)` -- returns the value of command-line 
-//      argument with prefix `argStr`, and transform it to integer before return
+//      argument with prefix `argStr`, and transforms it to integer before return
 process.getArgInt = function(arg, defValue) {
     var val = process.getArg(arg);
 	return val ? parseInt(val) : defValue; 

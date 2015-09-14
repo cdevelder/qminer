@@ -1899,10 +1899,10 @@ public:
 	//#- `intVec = la.newIntVec(arr)` -- copy a javascript int array `arr` 
 	//#- `intVec = la.newIntVec(intVec2)` -- clone an int vector `intVec2`
 	JsDeclareFunction(newIntVec);
-	//#- `strVec = la.newStrVec()` -- generate an empty integer vector
+	//#- `strVec = la.newStrVec()` -- generate an empty string vector
 	//#- `strVec = la.newStrVec({"vals":num, "mxvals":num2})` -- generate a vector with `num` zeros and reserve additional `num - num2` elements 
-	//#- `strVec = la.newStrVec(arr)` -- copy a javascript int array `arr` 
-	//#- `strVec = la.newStrVec(strVec2)` -- clone an str vector `strVec2`
+	//#- `strVec = la.newStrVec(arr)` -- copy a javascript string array `arr` 
+	//#- `strVec = la.newStrVec(strVec2)` -- clone a string vector `strVec2`
 	JsDeclareFunction(newStrVec);
 	//#- `mat = la.newMat()` -- generates a 0x0 matrix
 	//#- `mat = la.newMat({"rows":num, "cols":num2, "random":bool})` -- creates a matrix with `num` rows and `num2` columns and sets it to zero if the optional "random" property is set to `false` (default) and uniform random if "random" is `true`
@@ -2736,7 +2736,7 @@ public:
 	JsDeclareFunction(trainSvmClassify);
     //#- `svmModel = analytics.trainSvmRegression(mat, vec, svmRegParameters)` -- trains 
     //#     regression model using stochastic subgradient descent, where the columns from `mat` represent training feature vectors and vector `vec` represents the training targets;
-    //#     optional training parameters with their default values are a JSON object: `svmRegParameters = {c : 1.0, eps : 1.0, batchSize : 10000, maxIterations : 10000, maxTime : 600, minDiff : 1e-6, varbose : false}`.
+    //#     optional training parameters with their default values are a JSON object: `svmRegParameters = {c : 1.0, eps : 1.0, batchSize : 10000, maxIterations : 10000, maxTime : 600, minDiff : 1e-6, verbose : false}`.
 	//#     The parameter `c` is the SVM cost parameter, `eps` controls the epsilon-insensitive L1 loss, `batchSize` controls the sample size for stochastic subgradient calculations, `maxIterations` limits the number of subgradient steps, `maxTime` limits the runtime in seconds, `minDiff` is a tolerance that is used as a stopping condition, `verbose` controls verbosity of the algorithm; result is a linear model.
     JsDeclareFunction(trainSvmRegression);
     //#- `svmModel = analytics.loadSvmModel(fin)` -- load serialized linear model 

@@ -64,7 +64,7 @@ TLinModel SolveClassify(const TVecV& VecV, const int& Dims, const int& Vecs,
     EAssertR(Vecs > 0, "Number of vectors must be positive!");
     EAssertR(Cost > 0.0, "Cost parameter must be positive!");
     EAssertR(SampleSize > 0, "Sampling size must be positive!");
-    EAssertR(MxIter > 1, "Number of iterations to small!");
+    EAssertR(MxIter > 1, "Number of iterations too small!");
     
     Notify->OnStatusFmt("SVM parameters: c=%.2f, j=%.2f", Cost, UnbalanceWgt);
     
@@ -94,7 +94,7 @@ TLinModel SolveClassify(const TVecV& VecV, const int& Dims, const int& Vecs,
     //  - if larger then 1.0, then there is bias towards positives
     double SamplingRatio = (double(PosVecs) * UnbalanceWgt) /
         (double(PosVecs) * UnbalanceWgt + double(NegVecs));
-    Notify->OnStatusFmt("Sampling ration 1 positive vs %.2f negative [%.2f]", 
+    Notify->OnStatusFmt("Sampling ratio: 1 positive vs %.2f negative [%.2f]", 
         (1.0 / SamplingRatio - 1.0), SamplingRatio);
     
     TTmTimer Timer(MxMSecs); int Iters = 0; double Diff = 1.0;

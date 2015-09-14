@@ -79,13 +79,13 @@ fs.readCsvLines = function(fileName, callback, strDelimiter) {
 }
 
 //#- `fout = fs.writeCsvLine(fout, arr)` -- escape fields from array `arr` into CSV line and 
-//#     write is to `fout` as string; returns fout. Not the most efficient thing in the world.
+//#     write them to `fout` as string; returns fout. Not the most efficient thing in the world.
 //#     NOT YET TESTED!
 fs.writeCsvLine = function (fout, arr) {
     var line = '';
     for (var i = 0; i < arr.length; i++) {
         if (i > 0) { line += ','; }
-        // secape quotes
+        // escape quotes
         var val = (arr[i] + '').replace(/"/g, '""');
         // if we have comma inside, put whole field in quotes
         if (val.search(/("|,|\n)/g) >= 0) {

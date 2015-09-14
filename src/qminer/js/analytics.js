@@ -37,7 +37,7 @@ function createBatchModel(featureSpace, models) {
             this.models[cat].model.save(sout);
         }
         return sout;
-    }
+    };
 
     this.predict = function (record) {
         var vec = this.featureSpace.ftrSpVec(record);
@@ -46,7 +46,7 @@ function createBatchModel(featureSpace, models) {
             result[cat] = this.models[cat].model.predict(vec);
         }
         return result;
-    }
+    };
 
     this.predictLabels = function (record) {
         var result = this.predict(record);
@@ -57,7 +57,7 @@ function createBatchModel(featureSpace, models) {
             }
         }
         return labels;
-    }
+    };
     
     this.predictTop = function (record) {
         var result = this.predict(record);
@@ -73,7 +73,8 @@ function createBatchModel(featureSpace, models) {
             }
         }
         return top.category;
-    }
+    };
+    
     return this;
 }
 
@@ -117,7 +118,7 @@ exports.newBatchModel = function (records, features, target, limitCategories) {
                 target: linalg.newVec({mxVals : records.length})
             };
         }
-    }
+    };
 
     // initialize targets
     console.log("newBatchModel", "  preparing target vectors");
@@ -289,7 +290,7 @@ exports.classificationScore = function (cats) {
             ", Recall " +  (recall / count).toFixed(2) +
             ", F1 " + (f1 / count).toFixed(2) +
             ", Accuracy " + (accuracy / count).toFixed(2));        
-    }
+    };
 
     //#    - `cs.reportCSV(fout)` -- current statisitcs for each category to fout as CSV 
 	this.reportCSV = function (fout) { 
@@ -319,7 +320,7 @@ exports.classificationScore = function (cats) {
 			};
 		}
 	};
-}
+};
 
 //#- `result = new exports.rocScore(sample)` -- used for computing ROC curve and 
 //#     other related measures such as AUC; the result is a results object
@@ -446,7 +447,7 @@ exports.rocScore = function () {
             }
         }        
         return prediction;
-    }
+    };
 	    
 	//#     - `result.report(sample)` -- output to screen
 	this.report = function (sample) {
@@ -459,7 +460,7 @@ exports.rocScore = function () {
 		for (var i = 0; i < curve.length; i++) {
 		 	console.log(curve[i][0] + " - " + curve[i][1]);
         }        
-	}
+	};
 	
 	//#     - `result.reportCSV(fnm, sample)` -- save as CSV to file `fnm`
 	this.reportCSV = function (fnm, sample) {
@@ -469,8 +470,8 @@ exports.rocScore = function () {
 		var curve = this.curve(sample);
 		// save
 		fs.writeCsv(fs.openWrite(fnm), curve).close();
-	}
-}
+	};
+};
 
 //#- `cf = new analytics.confusionMatrix(cats)` -- for tracking confusion between label classification
 exports.confusionMatrix = function (cats) {
@@ -487,7 +488,7 @@ exports.confusionMatrix = function (cats) {
             }
         }
         return -1;
-    }
+    };
     
     //#     - `cf.count(correct, predicted)` -- update matrix with new prediction
     this.count = function(correct, predicted) {
@@ -496,7 +497,7 @@ exports.confusionMatrix = function (cats) {
         var col = this.getCatId(predicted);
         if (col == -1) { console.log("Unknown category '" + predicted + "'"); }
         this.matrix.put(row, col, this.matrix.at(row, col) + 1);
-    }    
+    };  
     
     //#     - `cf.report()` -- report on the current status
     this.report = function() {
@@ -534,8 +535,8 @@ exports.confusionMatrix = function (cats) {
             }
             console.log(line);
         }
-    }
-}
+    };
+};
 
 //#- `result = analytics.crossValidation(rs, features, target, folds)` -- creates a batch
 //#     model for records from record set `rs` using `features; `target` is the
@@ -630,7 +631,7 @@ exports.crossValidation = function (records, features, target, folds, limitCateg
 //#   Final parameters are all SVM parameters (c, j, batchSize, maxIterations, maxTime, minDiff, verbose).
 exports.newActiveLearner = function (query, qRecSet, fRecSet, ftrSpace, stts) {
     return new analytics.activeLearner(query, qRecSet, fRecSet, ftrSpace, stts);
-}
+};
 
 function defarg(arg, defaultval) {
     return arg == null ? defaultval : arg;
@@ -1090,7 +1091,7 @@ exports.lloyd = function (dim, k) {
 //#   model is used to solve classification tasks, where classifications are made by a function class(x) = sign(w'x + b). The following functions are exposed:
 exports.newPerceptron = function (dim, use_bias) {
     return new analytics.perceptron(dim, use_bias);
-}
+};
 exports.perceptron = function (dim, use_bias) {
     use_bias = typeof use_bias !== 'undefined' ? use_bias : false;
     var w = la.newVec({ "vals": dim });
@@ -1129,7 +1130,7 @@ exports.perceptron = function (dim, use_bias) {
 //#  when using inverse distance weighting average to compute prediction. The model exposes the following functions:
 exports.newKNearestNeighbors = function (k, buffer, power) {
     return new analytics.kNearestNeighbors(k, buffer, power);
-}
+};
 exports.kNearestNeighbors = function (k, buffer, power) {
     this.X = la.newMat();
     this.y = la.newVec();
